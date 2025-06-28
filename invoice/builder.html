@@ -9,10 +9,205 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link href="style.css" rel="stylesheet" />
-    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <style>
+      /* --- General Site UI Styling (Minimal) --- */
+      body {
+        font-family: "Inter", sans-serif;
+        display: flex;
+        flex-direction: column; /* Changed to column for better layout */
+        align-items: center;
+        min-height: 100vh;
+        padding: 1rem;
+        background-color: #f7fafc; /* Light background for the UI */
+      }
+      .gradient-text {
+        background: linear-gradient(to right, #2563eb, #9333ea);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+      .drop-zone {
+        transition: all 0.3s ease;
+        border: 4px dashed #8b5cf6;
+        background-color: #f3e8ff;
+      }
+      .drop-zone.highlight {
+        border-color: #6d28d9;
+        background-color: #f1e6ff;
+        box-shadow: 0 0 15px rgba(109, 40, 217, 0.4); /* Glow effect */
+      }
+      .loading-spinner {
+        border-top-color: #6d28d9; /* Purple spinner color */
+        animation: spin 1s linear infinite; /* Spin animation */
+      }
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+      /* Tailwind-like button styling, manually defined since we stripped custom CSS */
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.75rem 1.5rem;
+        border-radius: 0.75rem; /* More rounded buttons */
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease-in-out;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        text-decoration: none; /* Remove underline for links acting as buttons */
+      }
+      .btn-primary {
+        background: linear-gradient(
+          to right,
+          #8b5cf6,
+          #6d28d9
+        ); /* Gradient button */
+        color: white;
+        border: none;
+      }
+      .btn-primary:hover {
+        background: linear-gradient(
+          to right,
+          #6d28d9,
+          #5b21b6
+        ); /* Darker gradient on hover */
+        box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+        transform: translateY(-2px); /* Slight lift on hover */
+      }
+
+      /* Basic modal styling */
+      .modal {
+        display: none; /* Hidden by default */
+        position: fixed; /* Stay in place */
+        z-index: 1000; /* Sit on top */
+        left: 0;
+        top: 0;
+        width: 100%; /* Full width */
+        height: 100%; /* Full height */
+        overflow: auto; /* Enable scroll if needed */
+        background-color: rgba(0, 0, 0, 0.4); /* Black w/ opacity */
+        justify-content: center;
+        align-items: center;
+      }
+      .modal-content {
+        background-color: #fefefe;
+        margin: auto;
+        padding: 20px;
+        border: 1px solid #888;
+        width: 80%;
+        max-width: 500px;
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        text-align: center;
+      }
+      .close-button {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+      }
+      .close-button:hover,
+      .close-button:focus {
+        color: black;
+        text-decoration: none;
+        cursor: pointer;
+      }
+
+      /* Styles for the HTML invoice preview container */
+      #pdfLinks {
+        border: 1px solid #e2e8f0; /* Light gray border */
+        border-radius: 0.5rem; /* Slightly rounded corners */
+        background-color: #ffffff; /* White background */
+        padding: 1rem; /* Padding inside the container */
+      }
+
+      /* CSS for the invoice content, to be inlined in the generated HTML */
+      /* These are the styles that will be applied to the content captured by html2canvas */
+      .invoice-container {
+        padding: 40px;
+        font-family: "Inter", sans-serif;
+        width: 800px; /* Fixed width for consistent invoice display */
+        page-break-inside: avoid; /* Prevent page breaks within the container */
+        background: white;
+        box-shadow: none;
+        margin: 0 auto;
+        margin-bottom: 20px; /* Space between multiple invoices if rendered in a long HTML string */
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+      }
+      td,
+      th {
+        border: 1px solid #e5e7eb;
+        padding: 12px;
+        text-align: center;
+      }
+      th {
+        background-color: #ede9fe;
+        font-weight: 600;
+        color: #5b21b6;
+      }
+      .right {
+        text-align: right;
+      }
+      .logo {
+        max-width: 150px;
+        max-height: 100px;
+        object-fit: contain;
+      }
+      .invoice-header {
+        display: flex; /* Use flexbox for layout */
+        justify-content: space-between; /* Space out title/details and logo */
+        align-items: flex-start; /* Align items to the top */
+        padding-top: 0; /* Handled by invoice-container padding */
+        margin-bottom: 40px;
+        padding-bottom: 20px;
+        border-bottom: 2px solid #a78bfa;
+        flex-wrap: wrap; /* Allow wrapping for responsiveness */
+      }
+      .invoice-header h1 {
+        font-size: 2.5rem;
+        color: #5b21b6;
+        margin-bottom: 10px;
+        margin-top: 0 !important; /* Force no top margin */
+      }
+      .invoice-header p {
+        font-size: 0.9rem;
+        color: #4b5563;
+        line-height: 1.5;
+        margin-top: 0 !important; /* Force no top margin */
+      }
+      .invoice-title-block {
+        /* New class for the text content */
+        flex-grow: 1; /* Allows this block to take available space */
+        max-width: calc(
+          100% - 160px
+        ); /* Adjust based on logo width + some gap */
+      }
+      /* Specific styling for PDF download links to ensure visibility */
+      #pdfList li {
+        margin-bottom: 8px; /* Add some spacing between links */
+      }
+      #pdfList a {
+        color: #dc2626 !important; /* Explicitly red color for high visibility */
+        font-weight: 700 !important; /* Make it bold */
+        text-decoration: underline !important; /* Ensure underline */
+        padding: 4px 0; /* Add some vertical padding */
+        display: inline-block; /* Allow padding and margin on links */
+      }
+      #pdfList a:hover {
+        color: #b91c1c !important; /* Darker red on hover */
+      }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   </head>
   <body class="min-h-screen flex flex-col items-center justify-center p-4">
     <nav class="container mx-auto px-6 py-4 flex items-center justify-between">
@@ -26,26 +221,13 @@
           >The Invoice Builder</a
         >
       </div>
-      <!-- <a
-          href="#how-it-works"
-          class="text-gray-600 hover:text-gray-900 transition-colors"
-          >How it Works</a
-        >
-        <a
-          href="/invoice/builder.html"
-          class="border border-blue-200 text-blue-700 hover:bg-blue-50 px-4 py-2 rounded-md transition-colors"
-        >
-          Get Started
-        </a> -->
-      <!-- Mobile menu button (optional, not implemented for brevity based on provided example) -->
     </nav>
     <div class="w-full max-w-7xl bg-white rounded-xl shadow-2xl p-8 space-y-6">
       <h1
         class="text-6xl gradient-text font-extrabold text-center text-purple-800 mb-6 tracking-tight"
       >
-        Excel to Invoice PDFs
+        Excel to Invoice PDF Generator
       </h1>
-      <!-- Sample Excel Template Download Link -->
       <div
         class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-6 border border-green-200"
       >
@@ -71,19 +253,36 @@
             <div>
               <h3 class="text-lg font-semibold text-gray-900">Get Started</h3>
               <p class="text-gray-600">
-                Download our sample Excel template to see the required format
+                Download our sample Excel template to see the required format 
               </p>
             </div>
           </div>
+          <a href="./sample.xlsx">
           <button
             id="downloadTemplate"
             class="ml-auto px-6 py-3 bg-green-600 text-white rounded-xl font-medium hover:bg-green-700 transition-all duration-200 shadow-lg hover:shadow-xl"
           >
             Download Template
           </button>
+        </a>
         </div>
       </div>
-      <!-- Sender Information Form -->
+      <!-- NEW: Sample Excel Preview Section -->
+      <div
+        id="sampleExcelPreview"
+        class="hidden mt-6 p-6 bg-blue-50 border border-blue-300 rounded-xl shadow-md"
+      >
+        <h2 class="text-xl font-semibold text-blue-700 mb-4">
+          Sample Excel Data Preview:
+        </h2>
+        <div id="excelTableContainer" class="overflow-x-auto">
+          <!-- Excel table will be rendered here -->
+        </div>
+        <p class="text-sm text-gray-500 mt-4">
+          This is a preview of the expected Excel data format.
+        </p>
+      </div>
+      <!-- END NEW SECTION -->
       <form id="senderForm" class="space-y-4">
         <label
           for="yourName"
@@ -108,7 +307,7 @@
           placeholder="Your Tax Number"
           class="w-full border rounded-lg px-4 py-3 focus:ring-2 focus:ring-purple-400 focus:border-transparent transition-all duration-200"
         />
-        <!-- <label class="block text-gray-700 font-medium mt-4 text-lg"
+        <label class="block text-gray-700 font-medium mt-4 text-lg"
           ><b>Company Logo</b> [Optional]</label
         >
         <input
@@ -116,10 +315,9 @@
           id="logoInput"
           accept="image/*"
           class="block w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-100 file:text-purple-700 hover:file:bg-purple-200 cursor-pointer transition-colors duration-200"
-        /> -->
+        />
       </form>
 
-      <!-- Drag & Drop Zone for Excel File -->
       <div
         id="dropZone"
         class="drop-zone border-4 border-dashed border-purple-400 rounded-xl p-12 text-center bg-purple-50 hover:bg-purple-100 cursor-pointer flex flex-col items-center justify-center min-h-[220px] shadow-lg"
@@ -132,16 +330,14 @@
         <p id="fileName" class="mt-4 text-lg text-green-700 font-semibold"></p>
       </div>
 
-      <!-- Generate Invoices Button -->
       <button
         id="generateInvoicesButton"
         class="mt-6 px-6 py-3 btn btn-primary w-full md:w-auto"
         disabled
       >
-        Generate Invoices
+        Generate PDFs
       </button>
 
-      <!-- Loading Message -->
       <div
         id="loadingMessage"
         class="hidden flex items-center justify-center p-4 text-lg text-purple-700 bg-purple-50 rounded-lg shadow-inner"
@@ -152,7 +348,6 @@
         Processing file and generating PDFs...
       </div>
 
-      <!-- PDF Links and Download All Button -->
       <div
         id="pdfLinks"
         class="hidden mt-6 p-6 bg-green-50 border border-green-300 rounded-xl shadow-md"
@@ -173,7 +368,6 @@
       </div>
     </div>
 
-    <!-- Custom Modal for Alerts -->
     <div id="myModal" class="modal">
       <div class="modal-content">
         <span class="close-button">&times;</span>
@@ -186,6 +380,8 @@
         </button>
       </div>
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="script.js"></script>
   </body>
 </html>
