@@ -431,6 +431,9 @@ window.onload = function () {
                 </tbody>
               </table>
               <hr style="margin-top: 20px; border-color: #e5e7eb;"/>
+              <p style="text-align: center; font-size: 12px; color: #666; margin-top: 10px;">Add commentMore actions
+                Want this to be customized? Contact: harshiljani2002@gmail.com
+              </p>
             </div>
           `;
     }
