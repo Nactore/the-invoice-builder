@@ -179,7 +179,7 @@ window.onload = function () {
                 }
 
                 const clientMeta = rows[0];
-                const items = rows.slice(1).filter((row) => row.Description);
+                const items = rows.filter((row) => row.Description);
 
                 if (!items.length) {
                     console.warn(
@@ -431,9 +431,6 @@ window.onload = function () {
                 </tbody>
               </table>
               <hr style="margin-top: 20px; border-color: #e5e7eb;"/>
-              <p style="text-align: center; font-size: 12px; color: #666; margin-top: 10px;">
-                Want this to be customized? Contact: harshiljani2002@gmail.com
-              </p>
             </div>
           `;
     }
